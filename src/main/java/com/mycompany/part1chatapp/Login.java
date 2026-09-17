@@ -12,6 +12,7 @@ package com.mycompany.part1chatapp;
  */
 public class Login {
     //commit 2 - login class
+    //commit 3 - validation method
 
     // Attributes are characteristics of a class
     private String FirstName;
