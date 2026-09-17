@@ -11,6 +11,7 @@ package com.mycompany.part1chatapp;
  * @author Student
  */
 public class Login {
+    //commit 2 - login class
 
     // Attributes are characteristics of a class
     private String FirstName;
