@@ -14,6 +14,7 @@ public class Login {
     //commit 2 - login class
     //commit 3 - validation method
     //commit 4 - registration and login
+    //commit 5 - unit test
 
     // Attributes are characteristics of a class
     private String FirstName;
