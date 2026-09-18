@@ -16,13 +16,14 @@ public class Login {
     //commit 4 - registration and login
     //commit 5 - unit test
     //commit 6 - final
+    //commit 7 - attributes changed
 
     // Attributes are characteristics of a class
-    private String FirstName;
-    private String LastName;
-    private String Username;
-    private String Password;
-    private String CellPhoneNumber;
+    private final String FirstName;
+    private final String LastName;
+    private final String Username;
+    private final String Password;
+    private final String CellPhoneNumber;
 
     // Constructor for Login
     public Login(String FirstName, String LastName, String Username,
