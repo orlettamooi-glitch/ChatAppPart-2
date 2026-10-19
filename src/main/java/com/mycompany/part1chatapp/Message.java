@@ -3,110 +3,195 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.mycompany.part1chatapp;
+
 import java.util.Random;
+import java.io.FileWriter;
+import java.io.IOException;
+
 /**
  *
  * @author Student
  */
 public final class Message {
    
-   // Attributes
+   // Instance fields 
     private final String messageID;
     private final int messageNumber;
     private final String recipient;
     private final String messageText;
     private final String messageHash;
 
-    // Constructor for Message
+    // Static tracking (no arrays)
+    private static int totalMessages = 0;
+    private static final StringBuilder allSentMessages = new StringBuilder();
+
+    // Constructors 
+
+    /** A basic constructor: generates a random 10-digit ID.
+     * @param messageNumber
+     * @param recipient
+     * @param messageText */
     public Message(int messageNumber, String recipient, String messageText) {
         this.messageNumber = messageNumber;
         this.recipient = recipient;
         this.messageText = messageText;
-        
-        // Generate the ID first, because the hash needs it
         this.messageID = generateMessageID();
         this.messageHash = createMessageHash();
     }
 
-    // Generate a random 10-digit message ID
+    /** Test-only constructor with a fixed ID (used to test the exact hash).
+     * @param messageNumber
+     * @param recipient
+     * @param messageText
+     * @param fixedID */
+    public Message(int messageNumber, String recipient, String messageText, String fixedID) {
+        this.messageNumber = messageNumber;
+        this.recipient = recipient;
+        this.messageText = messageText;
+        this.messageID = fixedID;
+        this.messageHash = createMessageHash();
+    }
+
+    // ID generation (uses substring) 
+
     private String generateMessageID() {
         Random rand = new Random();
-        // Generates a number between 1000000000 and 9999999999
-        long id = (long) (rand.nextDouble() * 9000000000L) + 1000000000L;
-        return String.valueOf(id);
+        long seed = (long) (rand.nextDouble() * 9000000000L) + 1000000000L;
+        String raw = String.valueOf(seed);
+        String padded = raw + "0000000000";
+        return padded.substring(0, 10);   // exact 10-digit ID via substring
     }
 
-    // Check that the ID is not more than 10 characters
+    // Validation
+
     public boolean checkMessageID() {
-        if (messageID.length() <= 10) {
-            return true;
-        } else {
-            return false;
-        }
+        return messageID.length() <= 10;
     }
 
-    // Check that the recipient number is no more than 10 characters and starts with +
     public String checkRecipientCell() {
-        // Must start with + and be a valid length (Part 1 used +27 + 9 digits = 12 characters)
-        if (recipient.startsWith("+") && recipient.length() <= 13) { 
+        if (recipient != null && recipient.matches("^\\+27\\d{9}$")) {
             return "Cell phone number successfully captured.";
-        } else {
-            return "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.";
         }
+        return "Cell phone number is incorrectly formatted or does not contain "
+                + "an international code. Please correct the number and try again.";
     }
 
-    // Check if the message is 250 characters or less
     public String checkMessageLength() {
         if (messageText.length() <= 250) {
             return "Message ready to send.";
-        } else {
-            int excess = messageText.length() - 250;
-            return "Message exceeds 250 characters by " + excess + "; please reduce the size.";
         }
+        int excess = messageText.length() - 250;
+        return "Message exceeds 250 characters by " + excess + ", please reduce the size.";
     }
 
-    // Create the Message Hash
+    // Hash (uses substring + string manipulation)
+
     public String createMessageHash() {
-        // Get the first two digits of the ID using substring
         String firstTwo = messageID.substring(0, 2);
-        
-        // Find the first and last words without using arrays
+
         String cleanMessage = messageText.trim();
-        String firstWord = "";
-        String lastWord = "";
-        
-        // Get the first word
+        String firstWord;
+        String lastWord;
+
         int firstSpace = cleanMessage.indexOf(" ");
         if (firstSpace != -1) {
-            firstWord = cleanMessage.substring(0, firstSpace).toUpperCase();
-            // Get the last word
+            firstWord = cleanMessage.substring(0, firstSpace);
             int lastSpace = cleanMessage.lastIndexOf(" ");
-            lastWord = cleanMessage.substring(lastSpace + 1).toUpperCase();
+            lastWord = cleanMessage.substring(lastSpace + 1);
         } else {
-            // If the message is just one word
-            firstWord = cleanMessage.toUpperCase();
-            lastWord = cleanMessage.toUpperCase();
+            firstWord = cleanMessage;
+            lastWord = cleanMessage;
         }
 
-        // Remove punctuation from the words
-        firstWord = firstWord.replace("?", "").replace(",", "").replace(".", "").replace("!", "");
-        lastWord = lastWord.replace("?", "").replace(",", "").replace(".", "").replace("!", "");
+        firstWord = firstWord.replaceAll("[?,.!']", "").toUpperCase();
+        lastWord  = lastWord.replaceAll("[?,.!']", "").toUpperCase();
 
-        // Format: 00:0:HITONIGHT
         return firstTwo + ":" + messageNumber + ":" + firstWord + lastWord;
     }
 
-    // Return message details in the correct order
+    // ---------- Actions ----------
+
+    /** 1 = Send, 2 = Disregard, 3 = Store (JSON).
+     * @param choice
+     * @return  */
+    public String SentMessage(int choice) {
+        switch (choice) {
+            case 1 -> {
+                totalMessages++;
+                allSentMessages.append(displayMessageDetails()).append("\n\n");
+                return "Message successfully sent.";
+            }
+            case 2 -> {
+                return "Press 0 to delete the message.";
+            }
+            case 3 -> {
+                storeMessage();
+                return "Message successfully stored.";
+            }
+            default -> {
+                return "Invalid option.";
+            }
+        }
+    }
+
+    // Reporting (has no arrays) 
+
+    public static String printMessages() {
+        if (allSentMessages.length() == 0) {
+            return "No messages sent yet.";
+        }
+        return allSentMessages.toString();
+    }
+
+    public static int returnTotalMessages() {
+        return totalMessages;
+    }
+
+    /** Used by @BeforeEach in tests so counters don't leak between runs. */
+    public static void resetForTesting() {
+        totalMessages = 0;
+        allSentMessages.setLength(0);
+    }
+
+    // JSON persistence 
+
+    /**
+     * Stores this message as a JSON line in messages.json.
+     *Attribution:
+     * JSON file writing technique adapted from:
+     * Oracle. (2024). File I/O (Featuring NIO.2). Java SE Documentation.
+     * Available at: https://docs.oracle.com/javase/tutorial/essential/io/file.html
+     * (Accessed: 2026).
+     */
+    public void storeMessage() {
+        String json = "{\n"
+                + "  \"messageID\": \"" + messageID + "\",\n"
+                + "  \"messageHash\": \"" + messageHash + "\",\n"
+                + "  \"recipient\": \"" + recipient + "\",\n"
+                + "  \"message\": \"" + messageText + "\"\n"
+                + "}\n";
+
+        try (FileWriter writer = new FileWriter("messages.json", true)) {
+            writer.write(json);
+        } catch (IOException e) {
+            System.out.println("Error saving message: " + e.getMessage());
+        }
+    }
+
+    // Display 
+
     public String displayMessageDetails() {
-        return "Message ID: " + messageID + "\n" +
-               "Message Hash: " + messageHash + "\n" +
-               "Recipient: " + recipient + "\n" +
-               "Message: " + messageText;
+        return "Message ID: " + messageID + "\n"
+                + "Message Hash: " + messageHash + "\n"
+                + "Recipient: " + recipient + "\n"
+                + "Message: " + messageText;
     }
 
     // Getters
-    public String getMessageID() { return messageID; }
-    public String getMessageHash() { return messageHash; }
-    public String getRecipient() { return recipient; }
-    public String getMessageText() { return messageText; }    
+
+    public String getMessageID()     { return messageID; }
+    public String getMessageHash()   { return messageHash; }
+    public String getRecipient()     { return recipient; }
+    public String getMessageText()   { return messageText; }
+    public int    getMessageNumber() { return messageNumber; }
 }

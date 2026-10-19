@@ -4,8 +4,6 @@
 
 package com.mycompany.part1chatapp;
 import java.util.Scanner;
-import java.io.FileWriter;
-import java.io.IOException;
 
 /**
  *
@@ -13,9 +11,6 @@ import java.io.IOException;
  */
 public class Part1ChatApp {
     
-     // Keep track of total messages sent 
-    private static int totalMessagesSent = 0;
-
     public static void main(String[] args) {
   
        Scanner input = new Scanner (System.in);
@@ -80,31 +75,28 @@ System.out.print("Enter your South African cell phone number: ");
     }
 } 
 
-// Method to handle the messaging app
+ /** Menu loop — runs until the user selects Quit. */
     private static void runMessagingApp(Scanner input) {
         System.out.println("\n=================================");
         System.out.println("     Welcome to QuickChat.       ");
         System.out.println("=================================");
 
-        System.out.println("How many messages do you wish to enter? ");
-        int numMessages = Integer.parseInt(input.nextLine());
+        int numMessages = readPositiveInt(input, "How many messages do you wish to enter? ");
 
         boolean running = true;
-
-        // While loop to keep the app running until quit
         while (running) {
             System.out.println("\n===== QUICKCHAT MENU =====");
             System.out.println("1) Send Messages");
             System.out.println("2) Show recently sent messages");
             System.out.println("3) Quit");
-            System.out.println("Choose an option: ");
-            
-            int choice = Integer.parseInt(input.nextLine());
+            System.out.print("Choose an option: ");
 
+            int choice = readInt(input);
             switch (choice) {
                 case 1 -> sendMessages(input, numMessages);
                 case 2 -> System.out.println("Coming Soon.");
                 case 3 -> {
+                    System.out.println("Total messages sent: " + Message.returnTotalMessages());
                     System.out.println("Goodbye!");
                     running = false;
                 }
@@ -113,88 +105,80 @@ System.out.print("Enter your South African cell phone number: ");
         }
     }
 
-    // Method to send messages using a for loop
+    /** Collects exactly numMessages valid messages. */
     private static void sendMessages(Scanner input, int numMessages) {
-        
-        // For loop to allow the user to enter the set number of messages
         for (int i = 1; i <= numMessages; i++) {
-            System.out.println("\n--- Message " + i + " ---");
+            System.out.println("\n--- Message " + i + " of " + numMessages + " ---");
 
-            System.out.println("Enter recipient cell number: ");
-            String recipient = input.nextLine();
+            Message msg;
 
-            System.out.println("Enter message: ");
-            String messageText = input.nextLine();
+            // Retry this message until BOTH checks pass
+            while (true) {
+                System.out.print("Enter recipient cell number: ");
+                String recipient = input.nextLine();
 
-            Message msg = new Message(i, recipient, messageText);
+                System.out.print("Enter message: ");
+                String messageText = input.nextLine();
 
-            // Validate message length
-            String lengthCheck = msg.checkMessageLength();
-            System.out.println(lengthCheck);
-            
-            if (!lengthCheck.equals("Message ready to send.")) {
-                i--; // Decrease i so the loop repeats this message
-                continue;
+                msg = new Message(i, recipient, messageText);
+
+                String lengthCheck = msg.checkMessageLength();
+                System.out.println(lengthCheck);
+                if (!lengthCheck.equals("Message ready to send.")) continue;
+
+                String recipientCheck = msg.checkRecipientCell();
+                System.out.println(recipientCheck);
+                if (!recipientCheck.equals("Cell phone number successfully captured.")) continue;
+
+                break;
             }
 
-            // Validate recipient
-            String recipientCheck = msg.checkRecipientCell();
-            System.out.println(recipientCheck);
-
-            if (!recipientCheck.equals("Cell phone number successfully captured.")) {
-                i--; // Decrease i so the loop repeats this message
-                continue;
-            }
-
-            // Action menu
             System.out.println("\nChoose an action:");
             System.out.println("1) Send Message");
             System.out.println("2) Disregard Message");
             System.out.println("3) Store Message to send later");
-            System.out.println("Option: ");
+            System.out.print("Option: ");
 
-            int action = Integer.parseInt(input.nextLine());
-
+            int action = readInt(input);
             switch (action) {
                 case 1 -> {
-                    System.out.println("Message successfully sent");
+                    System.out.println(msg.SentMessage(1));
                     System.out.println("\n" + msg.displayMessageDetails());
-                    totalMessagesSent++;
                 }
                 case 2 -> {
-                    System.out.println("Press 0 to delete the message");
-                    input.nextLine(); // Wait for user to press enter
+                    System.out.println(msg.SentMessage(2));
+                    System.out.print("Enter 0 to confirm deletion: ");
+                    String confirm = input.nextLine();
+                    System.out.println("0".equals(confirm)
+                            ? "Message disregarded."
+                            : "Message kept.");
                 }
-                case 3 -> {
-                    System.out.println("Message successfully stored");
-                    storeMessageToJSON(msg);
-                }
-                default -> System.out.println("Invalid option.");
+                case 3 -> System.out.println(msg.SentMessage(3));
+                default -> System.out.println("Invalid option. Message not sent or stored.");
             }
         }
 
         System.out.println("\n=================================");
-        System.out.println("Total messages sent: " + totalMessagesSent);
+        System.out.println("Total messages sent: " + Message.returnTotalMessages());
         System.out.println("=================================");
     }
 
-    // Method to store message as JSON
-    private static void storeMessageToJSON(Message msg) {
-        String json = "{\n" +
-                "  \"messageID\": \"" + msg.getMessageID() + "\",\n" +
-                "  \"messageHash\": \"" + msg.getMessageHash() + "\",\n" +
-                "  \"recipient\": \"" + msg.getRecipient() + "\",\n" +
-                "  \"message\": \"" + msg.getMessageText() + "\"\n" +
-                "}\n";
+    // Input helpers 
 
+    private static int readPositiveInt(Scanner input, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            int v = readInt(input);
+            if (v > 0) return v;
+            System.out.println("Please enter a positive whole number.");
+        }
+    }
+
+    private static int readInt(Scanner input) {
         try {
-            try (FileWriter writer = new FileWriter("messages.json", true)) {
-                writer.write(json);
-            }
-            System.out.println("Message saved to messages.json");
-        } catch (IOException e) {
-            System.out.println("Error saving message: " + e.getMessage());
+            return Integer.parseInt(input.nextLine().trim());
+        } catch (NumberFormatException e) {
+            return -1;
         }
     }
 }
-
