@@ -17,7 +17,7 @@ public final class Message {
    
     // Instance fields 
     private final String messageID;
-    private final int messageNumber;
+    private final int messageNumber;//comment
     private final String recipient;
     private final String messageText;
     private final String messageHash;
