@@ -90,21 +90,15 @@ public class Part1ChatApp {
             int choice = readInt(input);
             
             // FIXED: Standardized switch statement for all Java versions
-            switch (choice) {
-                case 1:
-                    sendMessages(input, numMessages);
-                    break;
-                case 2:
-                    System.out.println("Coming Soon.");
-                    break;
-                case 3:
+            switch (choice) {   // used a switch case option 
+                case 1 -> sendMessages(input, numMessages);
+                case 2 -> System.out.println("Coming Soon.");
+                case 3 -> {
                     System.out.println("Total messages sent: " + Message.returnTotalMessages());
                     System.out.println("Goodbye!");
                     running = false;
-                    break;
-                default:
-                    System.out.println("Invalid option. Please choose 1, 2, or 3.");
-                    break;
+                }
+                default -> System.out.println("Invalid option. Please choose 1, 2, or 3.");
             }
         }
     } 
