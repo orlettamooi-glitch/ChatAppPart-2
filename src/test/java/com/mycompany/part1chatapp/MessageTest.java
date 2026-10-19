@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Student
  */
+// increased number of test from 6 to 10
 public class MessageTest {
 
     // 1. Testing if the message is ready to send (Success)
