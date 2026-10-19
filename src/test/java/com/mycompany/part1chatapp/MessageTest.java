@@ -83,6 +83,7 @@ public class MessageTest {
     }
 
     // 9. Testing a message with only one word (Hash logic edge case)
+    //comment
     @Test
     public void testMessageHashSingleWord() {
         Message msg = new Message(1, "+27718693002", "Hello");
