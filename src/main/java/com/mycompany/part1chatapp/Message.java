@@ -7,6 +7,7 @@ package com.mycompany.part1chatapp;
 import java.util.Random;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.File;
 
 /**
  *
@@ -14,14 +15,14 @@ import java.io.IOException;
  */
 public final class Message {
    
-   // Instance fields 
+    // Instance fields 
     private final String messageID;
     private final int messageNumber;
     private final String recipient;
     private final String messageText;
     private final String messageHash;
 
-    // Static tracking (no arrays)
+    // Static tracking (no arrays used, as requested)
     private static int totalMessages = 0;
     private static final StringBuilder allSentMessages = new StringBuilder();
 
@@ -114,23 +115,20 @@ public final class Message {
     /** 1 = Send, 2 = Disregard, 3 = Store (JSON).
      * @param choice
      * @return  */
-    public String SentMessage(int choice) {
+    public String SentMessage(String choice) {
+        // FIXED: Used traditional switch syntax with Strings and breaks
         switch (choice) {
-            case 1 -> {
+            case "1":
                 totalMessages++;
                 allSentMessages.append(displayMessageDetails()).append("\n\n");
                 return "Message successfully sent.";
-            }
-            case 2 -> {
+            case "2":
                 return "Press 0 to delete the message.";
-            }
-            case 3 -> {
+            case "3":
                 storeMessage();
                 return "Message successfully stored.";
-            }
-            default -> {
+            default:
                 return "Invalid option.";
-            }
         }
     }
 
@@ -164,20 +162,47 @@ public final class Message {
      * (Accessed: 2026).
      */
     public void storeMessage() {
-        String json = "{\n"
-                + "  \"messageID\": \"" + messageID + "\",\n"
-                + "  \"messageHash\": \"" + messageHash + "\",\n"
-                + "  \"recipient\": \"" + recipient + "\",\n"
-                + "  \"message\": \"" + messageText + "\"\n"
-                + "}\n";
+        File file = new File("messages.json");
+        boolean isNewFile = !file.exists() || file.length() == 0;
 
-        try (FileWriter writer = new FileWriter("messages.json", true)) {
-            writer.write(json);
+        // FIXED: Wrapped in [] to create a valid JSON Array
+        StringBuilder json = new StringBuilder();
+        
+        if (isNewFile) {
+            json.append("[\n");
+        } else {
+            // If file exists, we need to overwrite the closing bracket to add a comma
+            try {
+                String content = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+                content = content.trim();
+                if (content.endsWith("]")) {
+                    content = content.substring(0, content.length() - 1).trim();
+                    if (content.endsWith("}")) {
+                        content += ",\n";
+                    }
+                }
+                try (FileWriter writer = new FileWriter(file, false)) {
+                    writer.write(content);
+                }
+            } catch (IOException e) {
+                System.out.println("Error preparing JSON file: " + e.getMessage());
+            }
+        }
+
+        json.append("  {\n")
+            .append("    \"messageID\": \"").append(messageID).append("\",\n")
+            .append("    \"messageHash\": \"").append(messageHash).append("\",\n")
+            .append("    \"recipient\": \"").append(recipient).append("\",\n")
+            .append("    \"message\": \"").append(messageText).append("\"\n")
+            .append("  }\n")
+            .append("]\n");
+
+        try (FileWriter writer = new FileWriter(file, true)) {
+            writer.write(json.toString());
         } catch (IOException e) {
             System.out.println("Error saving message: " + e.getMessage());
         }
     }
-
     // Display 
 
     public String displayMessageDetails() {

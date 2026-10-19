@@ -3,6 +3,7 @@
  */
 
 package com.mycompany.part1chatapp;
+
 import java.util.Scanner;
 
 /**
@@ -13,28 +14,26 @@ public class Part1ChatApp {
     
     public static void main(String[] args) {
   
-       Scanner input = new Scanner (System.in);
+        Scanner input = new Scanner(System.in);
        
-    System.out.println("=========================");
-    System.out.println(" ChatApp Registeration ");
-    System.out.println("=========================");
+        System.out.println("=========================");
+        System.out.println(" ChatApp Registeration ");
+        System.out.println("=========================");
 
-    // Details 
-    
-System.out.println("Enter your First Name : ");
-String FirstName = input.nextLine();
+        // Details 
+        System.out.println("Enter your First Name : ");
+        String FirstName = input.nextLine();
 
+        System.out.println("Enter your Last Name : ");
+        String LastName = input.nextLine();
 
- System.out.println("Enter your Last Name : ");
-String LastName = input.nextLine();
+        System.out.println("Enter your Username : ");
+        String Username = input.nextLine();
 
-System.out.println("Enter your Username : ");
-String Username = input.nextLine();
+        System.out.println("Enter your Password : ");
+        String Password = input.nextLine();
 
-System.out.println("Enter your Password : ");
-String Password = input.nextLine();
-
-System.out.print("Enter your South African cell phone number: ");
+        System.out.print("Enter your South African cell phone number: ");
         String CellPhoneNumber = input.nextLine();
 
         // Create the Login object
@@ -65,17 +64,16 @@ System.out.print("Enter your South African cell phone number: ");
             boolean loginSuccessful = user.loginUser(enteredUsername, enteredPassword);
             System.out.println(user.returnLoginStatus(loginSuccessful));
             
-            //Part 2- Messaging 
+            // Part 2- Messaging 
             if (loginSuccessful) {
                 runMessagingApp(input);
-            
-        }
+            }
+        } // <--- FIXED: Added missing closing brace for the first if statement
 
         input.close();
-    }
-} 
+    } 
 
- /** Menu loop — runs until the user selects Quit. */
+    /** Menu loop — runs until the user selects Quit. */
     private static void runMessagingApp(Scanner input) {
         System.out.println("\n=================================");
         System.out.println("     Welcome to QuickChat.       ");
@@ -92,19 +90,26 @@ System.out.print("Enter your South African cell phone number: ");
             System.out.print("Choose an option: ");
 
             int choice = readInt(input);
+            
+            // FIXED: Standardized switch statement for all Java versions
             switch (choice) {
-                case 1 -> sendMessages(input, numMessages);
-                case 2 -> System.out.println("Coming Soon.");
-                case 3 -> {
+                case 1:
+                    sendMessages(input, numMessages);
+                    break;
+                case 2:
+                    System.out.println("Coming Soon.");
+                    break;
+                case 3:
                     System.out.println("Total messages sent: " + Message.returnTotalMessages());
                     System.out.println("Goodbye!");
                     running = false;
-                }
-                default -> System.out.println("Invalid option. Please choose 1, 2, or 3.");
+                    break;
+                default:
+                    System.out.println("Invalid option. Please choose 1, 2, or 3.");
+                    break;
             }
         }
-    }
-
+    } 
     /** Collects exactly numMessages valid messages. */
     private static void sendMessages(Scanner input, int numMessages) {
         for (int i = 1; i <= numMessages; i++) {
@@ -140,21 +145,25 @@ System.out.print("Enter your South African cell phone number: ");
             System.out.print("Option: ");
 
             int action = readInt(input);
+            
+            // FIXED: Standardized switch, converted action to String for SentMessage()
             switch (action) {
-                case 1 -> {
-                    System.out.println(msg.SentMessage(1));
+                case 1:
+                    System.out.println(msg.SentMessage("1")); // Passed "1" as a String
                     System.out.println("\n" + msg.displayMessageDetails());
-                }
-                case 2 -> {
-                    System.out.println(msg.SentMessage(2));
+                    break;
+                case 2:
+                    System.out.println(msg.SentMessage("2")); // Passed "2" as a String
                     System.out.print("Enter 0 to confirm deletion: ");
                     String confirm = input.nextLine();
-                    System.out.println("0".equals(confirm)
-                            ? "Message disregarded."
-                            : "Message kept.");
-                }
-                case 3 -> System.out.println(msg.SentMessage(3));
-                default -> System.out.println("Invalid option. Message not sent or stored.");
+                    System.out.println("0".equals(confirm) ? "Message disregarded." : "Message kept.");
+                    break;
+                case 3:
+                    System.out.println(msg.SentMessage("3")); // Passed "3" as a String
+                    break;
+                default:
+                    System.out.println("Invalid option. Message not sent or stored.");
+                    break;
             }
         }
 
