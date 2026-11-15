@@ -1,18 +1,18 @@
-{
-  "messageID": "2941945529",
-  "messageHash": "29:1:HITONIGHT",
-  "recipient": "+27718693002",
-  "message": "Hi Mike, can you join us for dinner tonight?"
-}
-{
-  "messageID": "2602557038",
-  "messageHash": "26:1:HIFRIEND",
-  "recipient": "+27098765432",
-  "message": "Hi, we will get through this friend. "
-}
-{
-  "messageID": "6584696220",
-  "messageHash": "65:3:LETS",
-  "recipient": "+27459865421",
-  "message": "Lets go home !!"
-}
+[
+  {
+    "flag": "Stored",
+    "sender": "Lethabo Mooi",
+    "recipient": "+27838884567",
+    "messageID": "9425586493",
+    "messageHash": "94:2:WHERETIME",
+    "message": "Where are you? You are late! I have asked you to be on time."
+  },
+  {
+    "flag": "Stored",
+    "sender": "Lethabo Mooi",
+    "recipient": "+27838884567",
+    "messageID": "6076881856",
+    "messageHash": "60:2:WHERETIME",
+    "message": "Where are you? You are late! I have asked you to be on time."
+  }
+]
