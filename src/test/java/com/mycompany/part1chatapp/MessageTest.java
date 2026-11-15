@@ -4,6 +4,9 @@
  */
 package com.mycompany.part1chatapp;
 
+import java.io.File;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,104 +17,207 @@ import static org.junit.jupiter.api.Assertions.*;
 // increased number of test from 6 to 10
 public class MessageTest {
 
-    // 1. Testing if the message is ready to send (Success)
+private static final String TEST_FILE = "messages.json";
+
+    @BeforeEach
+    public void setUp() {
+        new File(TEST_FILE).delete();
+        Message.resetForTesting();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        new File(TEST_FILE).delete();
+    }
+
+    // ---------- Part 2 ----------
+
     @Test
     public void testMessageLengthSuccess() {
-        Message msg = new Message(1, "+27718693002", "Hi Mike, can you join us for dinner tonight?");
+        Message msg = new Message(1, "Developer", "+27718693002",
+                "Hi Mike, can you join us for dinner tonight?");
         assertEquals("Message ready to send.", msg.checkMessageLength());
     }
 
-    // 2. Testing if the message is too long (Failure)
     @Test
     public void testMessageLengthFailure() {
-        String longMsg = "";
-        for (int i = 0; i < 260; i++) {
-            longMsg = longMsg + "a";
-        }
-        Message msg = new Message(1, "+27718693002", longMsg);
-        assertTrue(msg.checkMessageLength().contains("exceeds 250 characters"));
+        Message msg = new Message(1, "Developer", "+27718693002", "a".repeat(260));
+        assertEquals("Message exceeds 250 characters by 10; please reduce the size.",
+                msg.checkMessageLength());
     }
 
-    // 3. Testing if the cell phone number is captured (Success)
+    @Test
+    public void testMessageLengthExactly250() {
+        Message msg = new Message(1, "Developer", "+27718693002", "a".repeat(250));
+        assertEquals("Message ready to send.", msg.checkMessageLength());
+    }
+
     @Test
     public void testRecipientSuccess() {
-        Message msg = new Message(1, "+27718693002", "Hi Mike, can you join us for dinner tonight?");
+        Message msg = new Message(1, "Developer", "+27718693002", "Hi Mike");
         assertEquals("Cell phone number successfully captured.", msg.checkRecipientCell());
     }
 
-    // 4. Testing if the cell phone number is invalid (Failure)
     @Test
     public void testRecipientFailure() {
-        Message msg = new Message(1, "08575975889", "Hi Keegan, did you receive the payment?");
-        assertEquals("Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.", msg.checkRecipientCell());
+        Message msg = new Message(2, "Developer", "08575975889", "Hi Keegan");
+        assertEquals("Cell phone number is incorrectly formatted or does not contain "
+                + "an international code. Please correct the number and try again.",
+                msg.checkRecipientCell());
     }
 
-    // 5. Testing that the ID is created and valid
     @Test
-    public void testMessageIDCreated() {
-        Message msg = new Message(1, "+27718693002", "Hi Mike, can you join us for dinner tonight?");
-        assertTrue(msg.checkMessageID());
+    public void testExactMessageHash() {
+        Message msg = new Message(0, "Developer", "+27718693002",
+                "Hi Mike, can you join us for dinner tonight?", "0012345678");
+        assertEquals("00:0:HITONIGHT", msg.createMessageHash());
     }
 
-    // 6. Testing the Hash format
     @Test
-    public void testMessageHashFormat() {
-        Message msg = new Message(0, "+27718693002", "Hi Mike, can you join us for dinner tonight?");
-        String hash = msg.getMessageHash();
-        assertTrue(hash.contains(":"));
-        assertTrue(hash.equals(hash.toUpperCase()));
-    }
-
-    // 7. Testing the SentMessage and returnTotalMessages methods
-    @Test
-    public void testSentMessageAndTotal() {
-        Message msg = new Message(1, "+27718693002", "Hi Mike, can you join us for dinner tonight?");
-        String result = msg.SentMessage("1");
-        assertEquals("Message successfully sent.", result);
-        assertTrue(Message.returnTotalMessages() > 0);
-    }
-
-    // 8. Testing the exact length boundary (Exactly 250 characters)
-    @Test
-    public void testMessageLengthExactly250() {
-        String exactMsg = "";
-        for (int i = 0; i < 250; i++) {
-            exactMsg = exactMsg + "b";
+    public void testHashLoop() {
+        String[] messages = {"Hi Mike", "Wait, what?", "Hello"};
+        String[] expected = {"00:1:HIMIKE", "00:2:WAITWHAT", "00:3:HELLOHELLO"};
+        for (int i = 0; i < messages.length; i++) {
+            Message msg = new Message(i + 1, "Developer", "+27718693002",
+                    messages[i], "0099999999");
+            assertEquals(expected[i], msg.createMessageHash());
         }
-        Message msg = new Message(1, "+27718693002", exactMsg);
-        assertEquals("Message ready to send.", msg.checkMessageLength());
     }
 
-    // 9. Testing a message with only one word (Hash logic edge case)
-    //comment
+    // ---------- Part 3 test data ----------
+
+    private void populateTestData() {
+        new Message(1, "Developer", "+27834557896",
+                "Did you get the cake?", "0011111111").SentMessage("1");
+        new Message(2, "Developer", "+27838884567",
+                "Where are you? You are late! I have asked you to be on time.",
+                "0022222222").SentMessage("3");
+        new Message(3, "Developer", "+27834484567",
+                "Yohoooo, I am at your gate.", "0033333333").SentMessage("2");
+        new Message(4, "Developer", "0838884567",
+                "It is dinner time !", "0838884567").SentMessage("1");
+        new Message(5, "Developer", "+27838884567",
+                "Ok, I am leaving without you.", "0055555555").SentMessage("3");
+    }
+
     @Test
-    public void testMessageHashSingleWord() {
-        Message msg = new Message(1, "+27718693002", "Hello");
-        String hash = msg.getMessageHash();
-        // If it's one word, first and last word are the same, so it should end in HELLOHELLO
-        assertTrue(hash.endsWith("HELLOHELLO")); 
+    public void testSentMessagesArrayCorrectlyPopulated() {
+        populateTestData();
+        assertEquals("Did you get the cake?", Message.sentMessages[0].getMessageText());
+        assertEquals("It is dinner time !", Message.sentMessages[1].getMessageText());
+        assertEquals(2, Message.sentCount);
     }
 
-    // 10. Testing a message with punctuation (Hash logic edge case)
     @Test
-    public void testMessageHashWithPunctuation() {
-        Message msg = new Message(0, "+27718693002", "Wait, what?");
-        String hash = msg.getMessageHash();
-        // Punctuation should be removed, leaving WAITWHAT
-        assertTrue(hash.endsWith("WAITWHAT"));
-    }
-    
-        // This method handles the choice to send, store, or disregard
-    public String SentMessage(String action) {
-        return switch (action) {
-            case "1" -> "Message successfully sent";
-            case "3" -> "Message successfully stored";
-            default -> "Message disregarded";
-        };
+    public void testDisregardedArrayPopulated() {
+        populateTestData();
+        assertEquals(1, Message.disregardedCount);
+        assertEquals("Yohoooo, I am at your gate.",
+                Message.disregardedMessages[0].getMessageText());
     }
 
-    // Returns the total number of messages sent (Required by the brief)
-    public static int returnTotalMessages() {
-        return 1; // We are just returning a number > 0 to make the test pass
+    @Test
+    public void testStoredArrayPopulated() {
+        populateTestData();
+        assertEquals(2, Message.storedCount);
+    }
+
+    @Test
+    public void testDisplayLongestMessage() {
+        populateTestData();
+        assertEquals("Where are you? You are late! I have asked you to be on time.",
+                Message.getLongestStoredMessage());
+    }
+
+    @Test
+    public void testSearchForMessageID() {
+        populateTestData();
+        assertEquals("Recipient: 0838884567 | Message: It is dinner time !",
+                Message.searchByMessageID("0838884567"));
+    }
+
+    @Test
+    public void testSearchForMessageIDNotFound() {
+        populateTestData();
+        assertEquals("Message ID not found.", Message.searchByMessageID("0000000000"));
+    }
+
+    @Test
+    public void testSearchAllMessagesForRecipient() {
+        populateTestData();
+        String expected = "Message: Where are you? You are late! I have asked you to be on time.\n"
+                + "Message: Ok, I am leaving without you.";
+        assertEquals(expected, Message.searchByRecipient("+27838884567"));
+    }
+
+    @Test
+    public void testSearchRecipientNotFound() {
+        populateTestData();
+        assertEquals("No messages found for this recipient.",
+                Message.searchByRecipient("+27000000000"));
+    }
+
+    @Test
+    public void testDeleteMessageUsingHash() {
+        populateTestData();
+        String hash = Message.storedMessages[0].getMessageHash();
+        String result = Message.deleteByHash(hash);
+        assertTrue(result.contains("\"Where are you? You are late! I have asked you to be on time.\" successfully deleted."));
+        assertEquals(1, Message.storedCount);
+    }
+
+    @Test
+    public void testDeleteRemovesFromParallelArrays() {
+        populateTestData();
+        String hash = Message.storedMessages[0].getMessageHash();
+        Message.deleteByHash(hash);
+
+        assertEquals(4, Message.hashCount);
+        assertEquals(4, Message.idCount);
+        for (int i = 0; i < Message.hashCount; i++) {
+            assertNotEquals(hash, Message.messageHashes[i]);
+        }
+    }
+
+    @Test
+    public void testDeleteHashNotFound() {
+        populateTestData();
+        assertEquals("Message hash not found.", Message.deleteByHash("99:9:NOPE"));
+    }
+
+    @Test
+    public void testReportContainsMessageID() {
+        populateTestData();
+        String report = Message.generateReport();
+        assertTrue(report.contains("Message ID: 0022222222"));
+        assertTrue(report.contains("Flag: Stored"));
+        assertTrue(report.contains("Where are you?"));
+    }
+
+    @Test
+    public void testParallelArraysPopulated() {
+        populateTestData();
+        assertEquals(5, Message.hashCount);
+        assertEquals(5, Message.idCount);
+    }
+
+    // ---------- JSON round-trip ----------
+
+    @Test
+    public void testJsonRoundTripPreservesHash() {
+        Message m = new Message(2, "Developer", "+27838884567",
+                "Where are you? You are late! I have asked you to be on time.",
+                "0022222222");
+        m.SentMessage("3");
+        String originalHash = m.getMessageHash();
+
+        Message.resetForTesting();
+        Message.loadStoredMessagesFromJSON();
+
+        assertEquals(1, Message.storedCount);
+        assertEquals(originalHash, Message.storedMessages[0].getMessageHash());
+        assertEquals("0022222222", Message.storedMessages[0].getMessageID());
+        assertEquals(originalHash, Message.messageHashes[0]);
+        assertEquals("0022222222", Message.messageIDs[0]);
     }
 }

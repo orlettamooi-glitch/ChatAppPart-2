@@ -12,67 +12,69 @@ import java.util.Scanner;
  */
 public class Part1ChatApp {
     
-    public static void main(String[] args) {
-  
+        public static void main(String[] args) {
+
         try (Scanner input = new Scanner(System.in)) {
             System.out.println("=========================");
             System.out.println(" ChatApp Registeration ");
             System.out.println("=========================");
-            
+
             // Details
             System.out.println("Enter your First Name : ");
             String FirstName = input.nextLine();
-            
+
             System.out.println("Enter your Last Name : ");
             String LastName = input.nextLine();
-            
+
             System.out.println("Enter your Username : ");
             String Username = input.nextLine();
-            
+
             System.out.println("Enter your Password : ");
             String Password = input.nextLine();
-            
+
             System.out.print("Enter your South African cell phone number: ");
             String CellPhoneNumber = input.nextLine();
-            
+
             // Create the Login object
             Login user = new Login(FirstName, LastName, Username, Password, CellPhoneNumber);
-            
+
             System.out.println("\n========== REGISTRATION ==========");
-            
+
             // Show registration result
             String registrationMessage = user.registerUser();
             System.out.println(registrationMessage);
-            
+
             // Only continue to login if registration was successful
             if (registrationMessage.equals("Registration successful.")) {
-                
-                // Show user details
+
+                // Show user details — FIXED: Login class method is printUserDetails()
                 System.out.println("\n========== USER DETAILS ==========");
-                user.LoginDetails();
-                
+                user.printUserDetails();   // was: user.LoginDetails();
+
                 System.out.println("\n============ LOGIN ============");
-                
+
                 System.out.print("Enter your username: ");
                 String enteredUsername = input.nextLine();
-                
+
                 System.out.print("Enter your password: ");
                 String enteredPassword = input.nextLine();
-                
+
                 // Check login
                 boolean loginSuccessful = user.loginUser(enteredUsername, enteredPassword);
                 System.out.println(user.returnLoginStatus(loginSuccessful));
-                
-                // Part 2- Messaging
+
+                // Part 2 + Part 3 — Messaging
                 if (loginSuccessful) {
-                    runMessagingApp(input);
+                    // Load any previously stored messages before opening the menu
+                    Message.loadStoredMessagesFromJSON();
+                    runMessagingApp(input, FirstName + " " + LastName);
                 }
-            } // <--- FIXED: Added missing closing brace for the first if statement
+            }
         }
-    } 
+    }
 
     /** Menu loop — runs until the user selects Quit. */
-    private static void runMessagingApp(Scanner input) {
+    private static void runMessagingApp(Scanner input, String senderName) {
         System.out.println("\n=================================");
         System.out.println("     Welcome to QuickChat.       ");
         System.out.println("=================================");
@@ -85,25 +87,27 @@ public class Part1ChatApp {
             System.out.println("1) Send Messages");
             System.out.println("2) Show recently sent messages");
             System.out.println("3) Quit");
+            System.out.println("4) Stored Messages");
             System.out.print("Choose an option: ");
 
             int choice = readInt(input);
-            
-            // FIXED: Standardized switch statement for all Java versions
-            switch (choice) {   // used a switch case option 
-                case 1 -> sendMessages(input, numMessages);
+
+            switch (choice) {
+                case 1 -> sendMessages(input, numMessages, senderName);
                 case 2 -> System.out.println("Coming Soon.");
                 case 3 -> {
                     System.out.println("Total messages sent: " + Message.returnTotalMessages());
                     System.out.println("Goodbye!");
                     running = false;
                 }
-                default -> System.out.println("Invalid option. Please choose 1, 2, or 3.");
+                case 4 -> Message.displayStoredMenu(input);
+                default -> System.out.println("Invalid option. Please choose 1, 2, 3, or 4.");
             }
         }
-    } 
+    }
+
     /** Collects exactly numMessages valid messages. */
-    private static void sendMessages(Scanner input, int numMessages) {
+    private static void sendMessages(Scanner input, int numMessages, String senderName) {
         for (int i = 1; i <= numMessages; i++) {
             System.out.println("\n--- Message " + i + " of " + numMessages + " ---");
 
@@ -117,7 +121,8 @@ public class Part1ChatApp {
                 System.out.print("Enter message: ");
                 String messageText = input.nextLine();
 
-                msg = new Message(i, recipient, messageText);
+                // sender is passed so Part 3 can report who sent the message
+                msg = new Message(i, senderName, recipient, messageText);
 
                 String lengthCheck = msg.checkMessageLength();
                 System.out.println(lengthCheck);
@@ -137,25 +142,20 @@ public class Part1ChatApp {
             System.out.print("Option: ");
 
             int action = readInt(input);
-            
-            // FIXED: Standardized switch, converted action to String for SentMessage()
+
             switch (action) {
-                case 1:
-                    System.out.println(msg.SentMessage("1")); // Passed "1" as a String
+                case 1 -> {
+                    System.out.println(msg.SentMessage("1"));
                     System.out.println("\n" + msg.displayMessageDetails());
-                    break;
-                case 2:
-                    System.out.println(msg.SentMessage("2")); // Passed "2" as a String
+                }
+                case 2 -> {
+                    System.out.println(msg.SentMessage("2"));
                     System.out.print("Enter 0 to confirm deletion: ");
                     String confirm = input.nextLine();
-                    System.out.println("0".equals(confirm) ? "Message disregarded." : "Message kept.");
-                    break;
-                case 3:
-                    System.out.println(msg.SentMessage("3")); // Passed "3" as a String
-                    break;
-                default:
-                    System.out.println("Invalid option. Message not sent or stored.");
-                    break;
+                    System.out.println(msg.confirmDisregard(confirm));
+                }
+                case 3 -> System.out.println(msg.SentMessage("3"));
+                default -> System.out.println("Invalid option. Message not sent or stored.");
             }
         }
 
@@ -164,7 +164,7 @@ public class Part1ChatApp {
         System.out.println("=================================");
     }
 
-    // Input helpers 
+    // Input helpers
 
     private static int readPositiveInt(Scanner input, String prompt) {
         while (true) {

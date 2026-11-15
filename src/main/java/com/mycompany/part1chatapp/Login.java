@@ -18,7 +18,7 @@ public class Login {
     //commit 6 - final
     //commit 7 - attributes changed
 
-    // Attributes are characteristics of a class
+     // Attributes are characteristics of a class
     private final String FirstName;
     private final String LastName;
     private final String Username;
@@ -95,16 +95,11 @@ public class Login {
         }
     }
 
-    // Login Details
-    public void LoginDetails() {
+    // Login Details - FIXED: Replaced the broken UnsupportedOperationException
+    public void printUserDetails() {
         System.out.println("First Name: " + FirstName);
         System.out.println("Last Name: " + LastName);
         System.out.println("Username: " + Username);
         System.out.println("Cell Phone Number: " + CellPhoneNumber);
     }
 }
-
-
-    
-
-

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class LoginTest {
 
-    // ============================================
+ // ============================================
     // 1. USERNAME TESTS
     // ============================================
 
